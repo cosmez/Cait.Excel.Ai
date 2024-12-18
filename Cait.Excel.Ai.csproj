@@ -117,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AiServiceType.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="FrmConfiguration.cs">
       <SubType>Form</SubType>
     </Compile>

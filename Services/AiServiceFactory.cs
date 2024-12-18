@@ -10,47 +10,14 @@ namespace Cait.Excel.Ai.Services
 {
     public class AiServiceFactory
     {
-        private static string GetApiKey(AiServiceType aiServiceType)
+        public static IChatClient GetChatClient(string model, string proveedor, string endPointUrl = null)
         {
-
-            switch (aiServiceType)
-            {
-                case AiServiceType.OpenAi:
-                {
-                    string apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-                    return apiKey;
-                }
-                case AiServiceType.AzureOpenAi:
-                {
-                    string apiKey = Environment.GetEnvironmentVariable("AZURE_API_KEY");
-                    return apiKey;
-                }
-                case AiServiceType.Google:
-                {
-                    string apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
-                    return apiKey;
-                }
-                case AiServiceType.Together:
-                {
-                    string apiKey = Environment.GetEnvironmentVariable("TOGETHERAI_API_KEY");
-                    return apiKey;
-                }
-                case AiServiceType.Local:
-                {
-                    return null;
-                }
-            }
-
-            throw new Exception($"No configuration provided for Type: {aiServiceType}");
-        }
-
-        public static IChatClient GetChatClient(string model, AiServiceType aiServiceType, string endPointUrl = null)
-        {
-            var apiKey = GetApiKey(aiServiceType);
+            var configuration = ConfigurationManager.GetConfiguration();
+            var apiKey = configuration.ApiKey;
             var apiCredentials = new ApiKeyCredential(apiKey);
-            switch (aiServiceType)
+            switch (proveedor)
             {
-                case AiServiceType.Google:
+                case "Gemini":
                 {
                     string baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/";
                     var clientOptions = new OpenAIClientOptions()
@@ -60,7 +27,7 @@ namespace Cait.Excel.Ai.Services
                     var client = new ChatClient(model, apiCredentials, clientOptions);
                     return client.AsChatClient();
                 }
-                case AiServiceType.Together:
+                case "TogetherAI":
                 {
                     string baseUrl = "https://api.together.xyz/v1";
                     var clientOptions = new OpenAIClientOptions()
@@ -70,7 +37,7 @@ namespace Cait.Excel.Ai.Services
                     var client = new ChatClient(model, apiCredentials, clientOptions);
                     return client.AsChatClient();
                 }
-                case AiServiceType.Local:
+                case "Local":
                 {
                     if (endPointUrl is null) throw new ArgumentNullException(nameof(endPointUrl));
                     var clientOptions = new OpenAIClientOptions()
@@ -80,7 +47,7 @@ namespace Cait.Excel.Ai.Services
                     var client = new ChatClient(model, apiCredentials, clientOptions);
                     return client.AsChatClient();
                 }
-                case AiServiceType.AzureOpenAi:
+                case "AzureOpenAI":
                 {
                     //aiConfiguration.BaseUrl = configuration.BaseUrl;
                     //aiConfiguration.ApiVersion = "2024-07-01-preview";
@@ -88,7 +55,7 @@ namespace Cait.Excel.Ai.Services
                     //return new OpenAiService(_databaseService, _userService, aiConfiguration);
                     break;
                 }
-                case AiServiceType.OpenAi:
+                case "OpenAI":
                 default:
                 {
                     var client = new ChatClient(model, apiCredentials);
@@ -96,8 +63,27 @@ namespace Cait.Excel.Ai.Services
                 }
             }
 
-            throw new Exception($"No configuration provided for Type: {aiServiceType}");
+            throw new Exception($"No hay configuracion para: {proveedor}");
 
+        }
+
+        public static string GetDefaultModel(string proveedor)
+        {
+            switch (proveedor)
+            {
+                case "OpenAI":
+                    return "gpt-4o-mini";
+                case "AzureOpenAI":
+                    return "gpt-4o-mini";
+                case "Gemini":
+                    return "gemini-1.5-flash";
+                case "TogetherAI":
+                    return "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo";
+                case "Local":
+                    return "llama3.2";
+                default:
+                    throw new Exception($"No hay configuracion para:  {proveedor}");
+            }
         }
     }
 }

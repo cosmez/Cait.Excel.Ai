@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Cait.Excel.Ai.Services;
 
 namespace Cait.Excel.Ai
 {
@@ -21,6 +22,9 @@ namespace Cait.Excel.Ai
         {
             txtApiKey.Text = string.Empty;
             txtUrl.Text = string.Empty;
+
+            txtModel.Text = AiServiceFactory.GetDefaultModel(cbProveedor.SelectedItem.ToString());
+
             if (cbProveedor.SelectedItem.ToString() == "OpenAI")
             {
                 txtApiKey.Text = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
@@ -71,12 +75,30 @@ namespace Cait.Excel.Ai
                 
             }
 
+
+            txtModel.Text = AiServiceFactory.GetDefaultModel(cbProveedor.SelectedItem.ToString());
+            var configuration = new Configuration();
+            configuration.Provider = cbProveedor.SelectedItem.ToString();
+            configuration.ApiKey = txtApiKey.Text;
+            configuration.Url = txtUrl.Text;
+            configuration.Model = txtModel.Text;
+            configuration.System = txtSistema.Text;
+            configuration.Temperature = (float)txtTemperature.Value;
+            ConfigurationManager.SaveConfiguration(configuration);
+
             Close();
         }
 
         private void FrmConfiguration_Load(object sender, EventArgs e)
         {
-            cbProveedor.SelectedItem = "OpenAI";
+            var configuration = ConfigurationManager.GetConfiguration();
+            cbProveedor.SelectedItem = configuration.Provider;
+            txtApiKey.Text = configuration.ApiKey;
+            txtModel.Text = configuration.Model;
+            txtUrl.Text = configuration.Url;
+            txtSistema.Text = configuration.System;
+            txtTemperature.Value = (decimal)configuration.Temperature;
+            cbProveedor_SelectedValueChanged(sender, EventArgs.Empty);
         }
 
         private void lnkObtener_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

@@ -3,8 +3,8 @@
 	<ribbon>
 		<tabs>
 			<tab id='tab1' label='Cosme AI Tools'>
-				<group id='group1' label='My Group'>
-					<button id='button1' label='Settings' onAction='OnButtonPressed' image='RibbonImage'/>
+				<group id='group1' label='Configuración'>
+					<button id='button1' label='Configuración' onAction='OnButtonPressed' image='RibbonImage'/>
 				</group>
 			</tab>
 		</tabs>
