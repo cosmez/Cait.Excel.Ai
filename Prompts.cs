@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Cait.Excel.Ai.Services;
@@ -16,7 +15,7 @@ namespace Cait.Excel.Ai
     {
         private static readonly object PromptCallSentinel = new object();
 
-        [ExcelDna.Integration.ExcelFunction(description: "Prompt a AI por defecto")]
+        [ExcelFunction(description: "Prompt a AI por defecto")]
         public static object Prompt(
             [ExcelArgument(Name = "Input", Description = "Para a enviar")]
             string input,
@@ -38,7 +37,7 @@ namespace Cait.Excel.Ai
                     return ExcelError.ExcelErrorGettingData;
                 }
 
-                var sb = new System.Text.StringBuilder();
+                var sb = new StringBuilder();
                 sb.Append(input);
 
                 if (range != null)
@@ -48,7 +47,7 @@ namespace Cait.Excel.Ai
                         if (cell != null && !(cell is ExcelEmpty) && !(cell is ExcelMissing))
                         {
                             sb.Append(' ');
-                            sb.Append(cell.ToString());
+                            sb.Append(cell);
                         }
                     }
                 }
@@ -65,7 +64,7 @@ namespace Cait.Excel.Ai
             return result;
         }
 
-        [ExcelDna.Integration.ExcelFunction(description: "Prompt a AI con multiple salidas de manera vertical")]
+        [ExcelFunction(description: "Prompt a AI con multiple salidas de manera vertical")]
         public static object PromptVertical(
             [ExcelArgument(Name = "Input", Description = "Para a enviar")]
             string input,
@@ -87,17 +86,17 @@ namespace Cait.Excel.Ai
                     return ExcelError.ExcelErrorGettingData;
                 }
 
-                var sb = new System.Text.StringBuilder();
+                var sb = new StringBuilder();
                 sb.Append(input);
 
                 if (range != null)
                 {
                     foreach (var cell in range)
                     {
-                        if (cell != null && !(cell is ExcelEmpty))
+                        if (cell != null && !(cell is ExcelEmpty) && !(cell is ExcelMissing))
                         {
                             sb.Append(' ');
-                            sb.Append(cell.ToString());
+                            sb.Append(cell);
                         }
                     }
                 }
@@ -123,7 +122,9 @@ namespace Cait.Excel.Ai
         }
 
 
-        [ExcelDna.Integration.ExcelFunction(description: "Prompt a AI con multiple salidas de manera horizontal")]
+
+
+        [ExcelFunction(description: "Prompt a AI con multiple salidas de manera horizontal")]
         public static object PromptHorizontal(
             [ExcelArgument(Name = "Input", Description = "Para a enviar")]
             string input,
@@ -145,17 +146,17 @@ namespace Cait.Excel.Ai
                     return ExcelError.ExcelErrorGettingData;
                 }
 
-                var sb = new System.Text.StringBuilder();
+                var sb = new StringBuilder();
                 sb.Append(input);
 
                 if (range != null)
                 {
                     foreach (var cell in range)
                     {
-                        if (cell != null && !(cell is ExcelEmpty))
+                        if (cell != null && !(cell is ExcelEmpty) && !(cell is ExcelMissing))
                         {
                             sb.Append(' ');
-                            sb.Append(cell.ToString());
+                            sb.Append(cell);
                         }
                     }
                 }
@@ -181,7 +182,94 @@ namespace Cait.Excel.Ai
         }
 
 
-        [ExcelDna.Integration.ExcelFunction(description: "Genera un Resumen")]
+        [ExcelFunction(description: "Prompt a AI por defecto")]
+        public static object PromptOpciones(
+            [ExcelArgument(Name = "Input", Description = "Para a enviar")]
+            string input,
+            [ExcelArgument(Name = "Opciones", Description = "Opciones separados por coma(,)")]
+            string opciones)
+        {
+            var result = ExcelAsyncUtil.Run(nameof(PromptOpciones), new object[] { input, opciones }, delegate
+            {
+                var config = ConfigurationManager.GetConfiguration();
+                string system = config.System;
+                double temperature = config.Temperature;
+                string model = config.Model;
+                string proveedor = config.Provider;
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                if (string.IsNullOrEmpty(model))
+                {
+                    MessageBox.Show("No se ha configurado el proveedor IA", "Cosme AI Tools -> Configuracion");
+                    return ExcelError.ExcelErrorGettingData;
+                }
+
+                var sb = new StringBuilder();
+                sb.Append(input);
+
+                List<string> choices = new List<string>(opciones.Split(',').Select(s => s.Trim()));
+
+                var task = Task.Run(() => PromptChoicesAsync(sb.ToString(), choices, system, temperature, model, proveedor));
+                return task.Result;
+            });
+
+            if (result.Equals(ExcelError.ExcelErrorNA))
+            {
+                return "Pensando..";
+            }
+
+            return result;
+        }
+
+        [ExcelFunction(description: "Prompt a AI por defecto")]
+        public static object PromptOpcionesRango(
+            [ExcelArgument(Name = "Input", Description = "Para a enviar")]
+            string input,
+            [ExcelArgument(Description = "Rango de opciones")] object[,] range)
+        {
+            var result = ExcelAsyncUtil.Run(nameof(PromptOpcionesRango), new object[] { input, range }, delegate
+            {
+                var config = ConfigurationManager.GetConfiguration();
+                string system = config.System;
+                double temperature = config.Temperature;
+                string model = config.Model;
+                string proveedor = config.Provider;
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                if (string.IsNullOrEmpty(model))
+                {
+                    MessageBox.Show("No se ha configurado el proveedor IA", "Cosme AI Tools -> Configuracion");
+                    return ExcelError.ExcelErrorGettingData;
+                }
+
+                var sb = new StringBuilder();
+                sb.Append(input);
+
+                List<string> choices = new List<string>();
+
+                foreach (var cell in range)
+                {
+                    if (cell != null && !(cell is ExcelEmpty) && !(cell is ExcelMissing))
+                    {
+                        choices.Add(cell.ToString());
+                    }
+                }
+
+                var task = Task.Run(() => PromptChoicesAsync(sb.ToString(), choices, system, temperature, model, proveedor));
+                return task.Result;
+            });
+
+            if (result.Equals(ExcelError.ExcelErrorNA))
+            {
+                return "Pensando..";
+            }
+
+            return result;
+        }
+
+        [ExcelFunction(description: "Genera un Resumen")]
         public static object PromptResumen(
             [ExcelArgument(Description = "Contenido a resumir")] object[,] range,
             [ExcelArgument(Name = "Instrucciones", Description = "Instrucciones Adicionales")] string instrucciones = "")
@@ -202,15 +290,15 @@ namespace Cait.Excel.Ai
                     return ExcelError.ExcelErrorGettingData;
                 }
 
-                var sb = new System.Text.StringBuilder();
+                var sb = new StringBuilder();
                 sb.AppendLine("Genera un resumen con el siguiente contenido de las celdas seleccionadas en un archivo de Excel: ");
 
                 foreach (var cell in range)
                 {
-                    if (cell != null && !(cell is ExcelEmpty))
+                    if (cell != null && !(cell is ExcelEmpty) && !(cell is ExcelMissing))
                     {
                         sb.Append(' ');
-                        sb.Append(cell.ToString());
+                        sb.Append(cell);
                     }
                 }
 
@@ -231,7 +319,7 @@ namespace Cait.Excel.Ai
             return result;
         }
 
-        [ExcelDna.Integration.ExcelFunction(description: "Traduce el Contenido")]
+        [ExcelFunction(description: "Traduce el Contenido")]
         public static object PromptTraduce(
             [ExcelArgument(Description = "Contenido a traducir")] object[,] range,
             [ExcelArgument(Name = "Idioma", Description = "Idioma a traducir")] string idioma = "english")
@@ -252,15 +340,15 @@ namespace Cait.Excel.Ai
                     return ExcelError.ExcelErrorGettingData;
                 }
 
-                var sb = new System.Text.StringBuilder();
+                var sb = new StringBuilder();
                 sb.AppendLine($"Genera un traduccion con el siguiente contenido de las celdas seleccionadas a Idioma {idioma}: ");
                 sb.AppendLine("```");
                 foreach (var cell in range)
                 {
-                    if (cell != null && !(cell is ExcelEmpty))
+                    if (cell != null && !(cell is ExcelEmpty) && !(cell is ExcelMissing))
                     {
                         sb.Append(' ');
-                        sb.Append(cell.ToString());
+                        sb.Append(cell);
                     }
                 }
                 sb.AppendLine("```");
@@ -377,6 +465,79 @@ namespace Cait.Excel.Ai
             }
 
             return values;
+        }
+
+
+        /// <summary>
+        /// Single input, multiple outputs
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="system"></param>
+        /// <param name="temperature"></param>
+        /// <param name="model"></param>
+        /// <param name="proveedor"></param>
+        /// <param name="choices"></param>
+        /// <returns></returns>
+        public static async Task<string> PromptChoicesAsync(string input, List<string> choices, string system, double temperature,
+            string model, string proveedor)
+        {
+
+            var chatClient = AiServiceFactory.GetChatClient(model, proveedor);
+            var chatMessages = new List<ChatMessage>();
+
+            var jsonObject = new Dictionary<string, object>
+            {
+                { "type", "object" },
+                {
+                    "properties", new Dictionary<string, object>
+                    {
+                        {
+                            "response", new Dictionary<string, object>
+                            {
+                                { "type", "string" },
+                                { "enum", choices.ToArray() }
+                            }
+                        }
+                    }
+                }
+            };
+            var jsonString = JsonSerializer.Serialize(jsonObject, new JsonSerializerOptions
+            {
+                WriteIndented = true 
+            });
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Response en json con el siguiente schema: ");
+            sb.AppendLine("```");
+            sb.AppendLine(jsonString);
+            sb.AppendLine("```");
+            sb.AppendLine("el siguiente prompt:");
+            sb.AppendLine(input);
+
+            if (!string.IsNullOrEmpty(system))
+            {
+                chatMessages.Add(new ChatMessage(ChatRole.System, system));
+            }
+            chatMessages.Add(new ChatMessage(ChatRole.User, sb.ToString()));
+
+
+
+            var chatCompletionOptions = new ChatOptions()
+            {
+                Temperature = (float)temperature,
+                ResponseFormat = ChatResponseFormat.Json
+            };
+            var complete = await chatClient.CompleteAsync(chatMessages, chatCompletionOptions);
+            List<string> values = new List<string>();
+            using (JsonDocument doc = JsonDocument.Parse(complete.Choices[0].Text ?? string.Empty))
+            {
+                if (doc.RootElement.TryGetProperty("response", out JsonElement responseElement) && responseElement.ValueKind == JsonValueKind.String)
+                {
+                    return responseElement.GetString();
+                }
+            }
+
+            return string.Empty;
         }
 
     }
