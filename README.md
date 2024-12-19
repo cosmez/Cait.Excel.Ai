@@ -13,8 +13,8 @@ CAIT es un complemento para Excel desarrollado con Excel-DNA que te permite inte
 
 ## Instalación
 
-1. Descarga el archivo `CAIT.xll` desde la sección de [releases](https://github.com/tu-usuario/Cait.Excel.Ai/releases).
-2. Abre Excel y ve a `Archivo` > `Opciones` > `Complementos`.
+1. Descarga el archivo `Cait.Excel.Ai-AddIn64-packed.xll.zip` desde la sección de [releases](https://github.com/cosmez/Cait.Excel.Ai/releases/tag/alpha).
+2. Descomprime el zip, Abre Excel y ve a `Archivo` > `Opciones` > `Complementos`.
 3. En la parte inferior, selecciona `Complementos de Excel` y haz clic en `Ir...`.
 4. Haz clic en `Examinar...` y selecciona el archivo `CAIT.xll` descargado.
 5. Asegúrate de que el complemento esté habilitado y haz clic en `Aceptar`.
