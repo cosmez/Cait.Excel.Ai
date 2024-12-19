@@ -2,8 +2,8 @@
 <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' loadImage='LoadImage'>
 	<ribbon>
 		<tabs>
-			<tab id='tab1' label='Cosme AI Tools'>
-				<group id='group1' label='Configuración'>
+			<tab idMso='TabHome'>
+				<group id='group1' label='Cosme AI'>
 					<button id='button1' label='Configuración' onAction='OnButtonPressed' image='RibbonImage'/>
 				</group>
 			</tab>

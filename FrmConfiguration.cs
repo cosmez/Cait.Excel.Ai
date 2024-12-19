@@ -40,7 +40,7 @@ namespace Cait.Excel.Ai
                 txtApiKey.Text = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
                 txtUrl.Enabled = false;
             }
-            else if (cbProveedor.SelectedItem.ToString() == "Together")
+            else if (cbProveedor.SelectedItem.ToString() == "TogetherAI")
             {
                 txtApiKey.Text = Environment.GetEnvironmentVariable("TOGETHERAI_API_KEY");
                 txtUrl.Enabled = false;
@@ -66,7 +66,7 @@ namespace Cait.Excel.Ai
             {
                 Environment.SetEnvironmentVariable("GEMINI_API_KEY", txtApiKey.Text);
             }
-            else if (cbProveedor.SelectedItem.ToString() == "Together")
+            else if (cbProveedor.SelectedItem.ToString() == "TogetherAI")
             {
                 Environment.SetEnvironmentVariable("TOGETHERAI_API_KEY", txtApiKey.Text);
             }
@@ -97,6 +97,11 @@ namespace Cait.Excel.Ai
             txtModel.Text = configuration.Model;
             txtUrl.Text = configuration.Url;
             txtSistema.Text = configuration.System;
+            if (string.IsNullOrEmpty(txtSistema.Text))
+            {
+                configuration.System = @"Eres un bot de soporte para Excel, cuando se te pida algun calculo solo responde con la respuesta.
+            Responde sin markdown, solo texto plano y sin emojis a menos que se te pida.";
+            }
             txtTemperature.Value = (decimal)configuration.Temperature;
             cbProveedor_SelectedValueChanged(sender, EventArgs.Empty);
         }
@@ -115,7 +120,7 @@ namespace Cait.Excel.Ai
             {
                 System.Diagnostics.Process.Start("https://ai.google.dev/gemini-api/docs/api-key?hl=es-419");
             }
-            else if (cbProveedor.SelectedItem.ToString() == "Together")
+            else if (cbProveedor.SelectedItem.ToString() == "TogetherAI")
             {
                 System.Diagnostics.Process.Start("https://www.together.ai/");
             }
